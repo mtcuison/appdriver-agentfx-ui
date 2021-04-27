@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.stage.Stage;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -357,6 +358,79 @@ public class showFXDialog {
         } catch (Exception ex) {
             ex.printStackTrace();
             ShowMessageFX.Information(ex.getMessage(), pxeModuleName, "Exception detected???");
+        }
+        
+        return null;
+    }
+    
+    /**
+     * System Approval
+     * 
+     * @param foGRider Application Driver
+     * @return JSONObject of keys {sUserIDxx, nUserLevl}
+     */
+    public static JSONObject getApproval(GRider foGRider, Stage foStage){
+        JSONObject loJSON = new JSONObject();
+        String [] arr = new String [2];
+        
+        try {
+            
+            SysApprovalFX instance = new SysApprovalFX();
+            CommonUtils.showModal(instance);
+
+            arr[0] = instance.getUsername();
+            arr[1] = instance.getPassword();
+
+            if (arr[0].isEmpty() || arr[1].isEmpty()) return null;
+
+            arr[0] = foGRider.Encrypt(arr[0]);
+            arr[1] = foGRider.Encrypt(arr[1]);
+
+            String lsSQL = "SELECT * FROM xxxSysUser" + 
+                            " WHERE sLogNamex = " + SQLUtil.toSQL(arr[0]) +
+                                " AND sPassword = " + SQLUtil.toSQL(arr[1]) +
+                                " AND (cUserType = '1' OR sProdctID = " + 
+                                        SQLUtil.toSQL(foGRider.getProductID()) + ")";
+
+            ResultSet loRS = foGRider.executeQuery(lsSQL);
+
+            String lsUserIDxx;
+            String lsEmployID;
+            int lnRights;
+            
+            if (!loRS.next()){
+                ShowMessageFX.Information("Verify your log name and/or password", pxeModuleName, "Login Error");
+                return null;
+            }
+            
+            lsUserIDxx = loRS.getString("sUserIDxx");
+            lsEmployID = loRS.getString("sEmployNo");
+            lnRights = loRS.getInt("nUserLevl");
+            
+            if (loRS.getString("cUserStat").equals(UserState.SUSPENDED)){
+                ShowMessageFX.Information(foStage, "User has no Rights for Procedure Approval!!!", pxeModuleName, "User is currently Suspended!!!");
+                return null;
+            }
+            
+            if (loRS.getString("cLockStat").equals(UserLockState.LOCKED)){
+                ShowMessageFX.Information(foStage, "User has no Rights for Procedure Approval!!!", pxeModuleName, "User Rights is Currently Locked!!!");
+                return null;
+            }
+            
+            if (loRS.getString("cUserType").equals(UserType.LOCAL)){
+                if (!loRS.getString("sProdctID").equalsIgnoreCase(foGRider.getProductID())){
+                    ShowMessageFX.Information(foStage, "User has no Rights for Procedure Approval!!!", pxeModuleName, "User has no Rights for Procedure Approval!!!");
+                    return null;
+                }
+            }
+            
+            loJSON.put("sUserIDxx", (String) lsUserIDxx);
+            loJSON.put("sEmployID", (String) lsEmployID);
+            loJSON.put("nUserLevl", (int) lnRights);
+            return loJSON;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            ShowMessageFX.Information(foStage, ex.getMessage(), pxeModuleName, "Exception detected???");
         }
         
         return null;

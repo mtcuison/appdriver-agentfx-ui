@@ -22,6 +22,7 @@ import org.json.simple.JSONObject;
 import org.rmj.appdriver.GRider;
 import org.rmj.appdriver.SQLUtil;
 import org.rmj.appdriver.Tokenize;
+import org.rmj.appdriver.agent.MsgBox;
 import org.rmj.appdriver.agentfx.ShowMessageFX;
 import org.rmj.appdriver.agentfx.service.ITokenize;
 import org.rmj.appdriver.agentfx.service.TokenApprovalFactory;
@@ -91,7 +92,7 @@ public class TokenApprovalController implements Initializable {
     private void btnApprove_Click(ActionEvent event) {
         String lsEmployID = (String) poData.get("sReqstdTo");
         
-        JSONObject loJSON = showFXDialog.getApproval(poGRider);
+        JSONObject loJSON = showFXDialog.getApproval(poGRider, getStage());
         
         if (loJSON == null) return;
         
@@ -267,29 +268,32 @@ public class TokenApprovalController implements Initializable {
         JSONObject loJSON;
         JSONArray arr = poApproval.loadCodeRequest();
 
-        for(Object o: arr){
-            if ( o instanceof JSONObject ) {
-                loJSON = (JSONObject) o;
+        if (arr == null){
+            MsgBox.showOk(poApproval.getMessage());
+        } else {
+            for(Object o: arr){
+                if ( o instanceof JSONObject ) {
+                    loJSON = (JSONObject) o;
 
-                data.add(new TableModel( 
-                            (String) loJSON.get("sRqstType"),
-                            getEmployee((String) loJSON.get("sReqstdTo")),
-                            getTranStat((String) loJSON.get("cTranStat")),
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            ""));
+                    data.add(new TableModel( 
+                                (String) loJSON.get("sRqstType"),
+                                getEmployee((String) loJSON.get("sReqstdTo")),
+                                getTranStat((String) loJSON.get("cTranStat")),
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                ""));
+                }
             }
+            //set the data array to public for future use
+            paData = arr;
+
+            table.getSelectionModel().selectFirst();
+            pnSelectd = table.getSelectionModel().getSelectedIndex();
         }
-        
-        //set the data array to public for future use
-        paData = arr;
-        
-        table.getSelectionModel().selectFirst();
-        pnSelectd = table.getSelectionModel().getSelectedIndex();
     }
     
     private String getTranStat(String fsValue){

@@ -14,5 +14,7 @@
         <group name="gocas"/>
         <group name="GCard"/>
         <group name="POS"/>
+        <group name="CAS"/>
+        <group name="Engineering Inventory Management System"/>
     </open-files>
 </project-private>
